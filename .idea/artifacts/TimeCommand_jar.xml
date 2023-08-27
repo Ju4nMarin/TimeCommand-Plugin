@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="TimeCommand:jar">
+    <output-path>$USER_HOME$/Documents/Plugins</output-path>
+    <root id="archive" name="TimeCommand.jar">
+      <element id="module-output" name="TimeCommand" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/spigot-api-1.20.1-R0.1-20230826.083319-58.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

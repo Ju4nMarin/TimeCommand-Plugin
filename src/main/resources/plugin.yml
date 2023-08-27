@@ -1,0 +1,15 @@
+name: TimeCommand
+version: '${project.version}'
+main: me.evo_es.timecommand.TimeCommand
+api-version: '1.13'
+authors: [evo_es]
+description: TimeCommand
+softdepend: [LuckPerms]
+
+commands:
+  tmc:
+    description: Executes a command with time delay
+    usage: /tmc <command> <unit> <quantity>
+
+permissions:
+  timecommand.command.tmc: true
