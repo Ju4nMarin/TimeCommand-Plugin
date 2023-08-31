@@ -18,9 +18,9 @@ TimeCommand is a Bukkit plugin that allows you to schedule and manage commands t
 ## Usage
 
 - To schedule a command, use the `/tmc` command followed by the command to be executed, time unit, and quantity.
-  Example: `/tmc say Hello World! 1h 2` (Execute "say Hello World!" after 2 hours)
+  Example: `/tmc say Hello World! h 2` (Execute "say Hello World!" after 2 hours)
 - To list scheduled commands, use `/tmc list <page>` to view them paginated.
-- For more information and available commands, use `/tmc` or `/tmc help`.
+- For more information and available commands, use `/tmc`.
 
 ## Support and Feedback
 
