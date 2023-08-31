@@ -1,3 +1,6 @@
-me\evo_es\timecommand\CommandTm.class
+me\evo_es\timecommand\Updater.class
 me\evo_es\timecommand\TimeCommand.class
-me\evo_es\timecommand\CommandTm$1.class
+me\evo_es\timecommand\CommandTm.class
+me\evo_es\timecommand\ScheduledCommand.class
+me\evo_es\timecommand\VersionCommand.class
+me\evo_es\timecommand\JoinUpdaterMessage.class

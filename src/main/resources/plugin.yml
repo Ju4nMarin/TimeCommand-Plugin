@@ -8,8 +8,14 @@ softdepend: [LuckPerms]
 
 commands:
   tmc:
-    description: Executes a command with time delay
-    usage: /tmc <command> <unit> <quantity>
+    description: Ejecuta un comando con retardo
+    usage: /tmc <comando> <unidad> <cantidad>
+    aliases: [TMC]
+
 
 permissions:
-  timecommand.command.tmc: true
+  timecommand.command.tmc:
+    default: op
+    description: permite usar el comando tmc
+
+
