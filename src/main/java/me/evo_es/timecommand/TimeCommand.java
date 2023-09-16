@@ -69,9 +69,9 @@ class CommandTm implements CommandExecutor {
         this.scheduledCommands = scheduledCommands;
     }
 
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         if (args.length >= 3 && !args[0].equalsIgnoreCase("list")) {
             if (!sender.hasPermission("timecommand.command.tmc")) {
                 sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.RED + "You don't have permission to use this command.");
@@ -92,12 +92,10 @@ class CommandTm implements CommandExecutor {
             stopValues.add("D");
             stopValues.add("MM");
 
-
             for (String item : args) {
                 if (stopValues.contains(item)) {
                     break;
                 }
-
                 itemsBeforeStop.add(item);
             }
 
@@ -141,14 +139,22 @@ class CommandTm implements CommandExecutor {
             scheduledCommands.add(scheduledCommand);
 
             sender.sendMessage(ChatColor.AQUA + "[TMC]: " +
-                    ChatColor.GOLD + "Command '" + ChatColor.YELLOW +  comando +  ChatColor.GOLD + "' executed in "
+                    ChatColor.GOLD + "Command '" + ChatColor.YELLOW + comando + ChatColor.GOLD + "' executed in "
                     + ChatColor.YELLOW + cantidad + " " + ChatColor.GOLD + unidad + ".");
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("list")) {
-            int pagina;
-            try {
-                pagina = Integer.parseInt(args[1]);
-            } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid page number.");
+        } else if (args.length >= 1 && args[0].equalsIgnoreCase("list")) {
+            int pagina = 1;
+
+            if (args.length == 2) {
+                try {
+                    pagina = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid page number.");
+                    return true;
+                }
+            }
+
+            if (scheduledCommands.isEmpty()) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "No commands scheduled.");
                 return true;
             }
 
@@ -162,9 +168,9 @@ class CommandTm implements CommandExecutor {
 
             int inicio = (pagina - 1) * comandosPorPagina;
             int fin = Math.min(inicio + comandosPorPagina, scheduledCommands.size());
-            sender.sendMessage( " ");
-            sender.sendMessage(ChatColor.YELLOW + "Scheduled Commands Page (" + ChatColor.GOLD + pagina + ChatColor.YELLOW + "/" + ChatColor.YELLOW +  totalPaginas + ChatColor.YELLOW +"):");
-            sender.sendMessage( " ");
+            sender.sendMessage(" ");
+            sender.sendMessage(ChatColor.YELLOW + "Scheduled Commands Page (" + ChatColor.GOLD + pagina + ChatColor.YELLOW + "/" + ChatColor.YELLOW + totalPaginas + ChatColor.YELLOW + "):");
+            sender.sendMessage(" ");
             if (inicio >= fin) {
                 sender.sendMessage(ChatColor.YELLOW + "Empty page");
             } else {
@@ -174,7 +180,7 @@ class CommandTm implements CommandExecutor {
                     String timeRemaining = formatTime(remainingTicks / 20);
 
                     sender.sendMessage(ChatColor.GOLD + "- " + ChatColor.GOLD + "' " + ChatColor.WHITE + scheduledCommand.getCommand() + ChatColor.GOLD + " '" +
-                            ChatColor.GOLD + " Time Remaining: " + "(" + ChatColor.YELLOW + timeRemaining +  ChatColor.GOLD + ")");
+                            ChatColor.GOLD + " Time Remaining: " + "(" + ChatColor.YELLOW + timeRemaining + ChatColor.GOLD + ")");
                 }
             }
             sender.sendMessage(" ");
@@ -189,6 +195,7 @@ class CommandTm implements CommandExecutor {
 
         return true;
     }
+
 
     private String formatTime(long timeInSeconds) {
         long days = timeInSeconds / 86400;
