@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,7 +33,6 @@ public final class TimeCommand extends JavaPlugin {
         String message3 = ChatColor.GOLD + "-------------------------------------------------------------------------";
         getServer().getConsoleSender().sendMessage(message3);
 
-
         updater = new Updater(this);
         updater.checkAndUpdate();
 
@@ -52,7 +52,10 @@ public final class TimeCommand extends JavaPlugin {
         while (iterator.hasNext()) {
             ScheduledCommand scheduledCommand = iterator.next();
             if (scheduledCommand.decrementTicksRemaining() <= 0) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), scheduledCommand.getCommand());
+                String[] commands = scheduledCommand.getCommand().split("&&");
+                for (String command : commands) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.trim());
+                }
                 iterator.remove();
             }
         }
@@ -69,51 +72,49 @@ class CommandTm implements CommandExecutor {
         this.scheduledCommands = scheduledCommands;
     }
 
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length >= 3 && !args[0].equalsIgnoreCase("list")) {
-            if (!sender.hasPermission("timecommand.command.tmc")) {
-                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.RED + "You don't have permission to use this command.");
+        if (!sender.hasPermission("timecommand.command.tmc")) {
+            sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.RED + "You don't have permission to use this command.");
+            return true;
+        }
+
+        if (args.length >= 3 && !args[0].equalsIgnoreCase("list") && !args[0].equalsIgnoreCase("remove")) {
+            ArrayList<String> stopValues = new ArrayList<>(Arrays.asList("s", "m", "h", "d", "mm"));
+            ArrayList<String> argList = new ArrayList<>(Arrays.asList(args));
+
+            int unitIndex = -1;
+            for (int i = argList.size() - 2; i >= 0; i--) {
+                if (stopValues.contains(argList.get(i).toLowerCase())) {
+                    unitIndex = i;
+                    break;
+                }
+            }
+
+            if (unitIndex == -1 || unitIndex + 1 >= argList.size()) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid time unit. The options are: " +
+                        ChatColor.GOLD + "(s, m, h, d, mm) " + ChatColor.YELLOW + "seconds, minutes, hours, days, and months.");
                 return true;
             }
 
-            List<String> itemsBeforeStop = new ArrayList<>();
+            String unidad = argList.get(unitIndex).toLowerCase();
 
-            List<String> stopValues = new ArrayList<>();
-            stopValues.add("s");
-            stopValues.add("m");
-            stopValues.add("h");
-            stopValues.add("d");
-            stopValues.add("mm");
-            stopValues.add("S");
-            stopValues.add("M");
-            stopValues.add("H");
-            stopValues.add("D");
-            stopValues.add("MM");
-
-            for (String item : args) {
-                if (stopValues.contains(item)) {
-                    break;
-                }
-                itemsBeforeStop.add(item);
+            if (!stopValues.contains(unidad)) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid time unit. The options are: " +
+                        ChatColor.GOLD + "(s, m, h, d, mm) " + ChatColor.YELLOW + "seconds, minutes, hours, days, and months.");
+                return true;
             }
 
-            String comando = String.join(" ", itemsBeforeStop);
-            long ticks;
-
-            String unitemp = args[args.length - 2];
-            String unidad = unitemp.toLowerCase();
-
+            String comando = String.join(" ", argList.subList(0, unitIndex));
             int cantidad;
-
             try {
-                cantidad = Integer.parseInt(args[args.length - 1]);
+                cantidad = Integer.parseInt(argList.get(unitIndex + 1));
             } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "The amount must be an integer.");
                 return true;
             }
 
+            long ticks;
             switch (unidad) {
                 case "s":
                     ticks = cantidad * 20L;
@@ -131,16 +132,22 @@ class CommandTm implements CommandExecutor {
                     ticks = cantidad * 51840000L;
                     break;
                 default:
-                    sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid time unit. The options are: (s, m, h, d, mm) seconds, minutes, days and mount");
+                    sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid time unit. The options are: " +
+                            ChatColor.GOLD + "(s, m, h, d, mm) " + ChatColor.YELLOW + "seconds, minutes, hours, days, and months.");
                     return true;
+            }
+
+            if (comando.trim().toLowerCase().startsWith("tmc")) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.RED + "You cannot schedule nested /tmc commands.");
+                return true;
             }
 
             ScheduledCommand scheduledCommand = new ScheduledCommand(comando, ticks);
             scheduledCommands.add(scheduledCommand);
 
             sender.sendMessage(ChatColor.AQUA + "[TMC]: " +
-                    ChatColor.GOLD + "Command '" + ChatColor.YELLOW + comando + ChatColor.GOLD + "' executed in "
-                    + ChatColor.YELLOW + cantidad + " " + ChatColor.GOLD + unidad + ".");
+                    ChatColor.GOLD + "Command '" + ChatColor.YELLOW + comando + ChatColor.GOLD + "' scheduled to execute in " +
+                    ChatColor.YELLOW + ticks / 20 + ChatColor.GOLD + " seconds.");
         } else if (args.length >= 1 && args[0].equalsIgnoreCase("list")) {
             int pagina = 1;
 
@@ -169,7 +176,7 @@ class CommandTm implements CommandExecutor {
             int inicio = (pagina - 1) * comandosPorPagina;
             int fin = Math.min(inicio + comandosPorPagina, scheduledCommands.size());
             sender.sendMessage(" ");
-            sender.sendMessage(ChatColor.YELLOW + "Scheduled Commands Page (" + ChatColor.GOLD + pagina + ChatColor.YELLOW + "/" + ChatColor.YELLOW + totalPaginas + ChatColor.YELLOW + "):");
+            sender.sendMessage(ChatColor.YELLOW + "Scheduled Commands Page (" + ChatColor.GOLD + pagina + ChatColor.YELLOW + "/" + ChatColor.GOLD + totalPaginas + ChatColor.YELLOW + "):");
             sender.sendMessage(" ");
             if (inicio >= fin) {
                 sender.sendMessage(ChatColor.YELLOW + "Empty page");
@@ -179,23 +186,42 @@ class CommandTm implements CommandExecutor {
                     long remainingTicks = scheduledCommand.getTicksRemaining();
                     String timeRemaining = formatTime(remainingTicks / 20);
 
-                    sender.sendMessage(ChatColor.GOLD + "- " + ChatColor.GOLD + "' " + ChatColor.WHITE + scheduledCommand.getCommand() + ChatColor.GOLD + " '" +
+                    sender.sendMessage(ChatColor.DARK_AQUA + "[" + ChatColor.AQUA + (i + 1) + ChatColor.DARK_AQUA + "] " +
+                            ChatColor.GOLD + "' " + ChatColor.WHITE + scheduledCommand.getCommand() + ChatColor.GOLD + " '" +
                             ChatColor.GOLD + " Time Remaining: " + "(" + ChatColor.YELLOW + timeRemaining + ChatColor.GOLD + ")");
                 }
             }
             sender.sendMessage(" ");
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("remove")) {
+            int index;
+
+            try {
+                index = Integer.parseInt(args[1]) - 1; // Convert 1-based index to 0-based index
+            } catch (NumberFormatException e) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Invalid index. Check the list index with the " +
+                        ChatColor.GOLD + "/tmc list" + ChatColor.YELLOW + " command.");
+                return true;
+            }
+
+            if (index < 0 || index >= scheduledCommands.size()) {
+                sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.YELLOW + "Index out of range.");
+                return true;
+            }
+
+            ScheduledCommand removedCommand = scheduledCommands.remove(index);
+            sender.sendMessage(ChatColor.AQUA + "[TMC]: " + ChatColor.GOLD + "Command '" + ChatColor.YELLOW + removedCommand.getCommand() + ChatColor.GOLD + "' removed from the schedule.");
         } else {
             sender.sendMessage(ChatColor.GOLD + "============ TimeCommand ==============");
             sender.sendMessage(" ");
-            sender.sendMessage(ChatColor.GOLD + "1." + ChatColor.YELLOW + " tmc <command> <unit> <quantity>.");
-            sender.sendMessage(ChatColor.GOLD + "2." + ChatColor.YELLOW + " tmc list <page>");
+            sender.sendMessage(ChatColor.GOLD + "1." + ChatColor.YELLOW + " /tmc <command> <unit> <quantity>");
+            sender.sendMessage(ChatColor.GOLD + "2." + ChatColor.YELLOW + " /tmc list <page>");
+            sender.sendMessage(ChatColor.GOLD + "3." + ChatColor.YELLOW + " /tmc remove <index>");
             sender.sendMessage(" ");
             sender.sendMessage(ChatColor.GOLD + "======================================");
         }
 
         return true;
     }
-
 
     private String formatTime(long timeInSeconds) {
         long days = timeInSeconds / 86400;
@@ -207,7 +233,7 @@ class CommandTm implements CommandExecutor {
 }
 
 class ScheduledCommand {
-    private String command;
+    private final String command;
     private long ticksRemaining;
 
     public ScheduledCommand(String command, long ticksRemaining) {
@@ -224,15 +250,7 @@ class ScheduledCommand {
         return command;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
-    }
-
     public long getTicksRemaining() {
         return ticksRemaining;
-    }
-
-    public void setTicksRemaining(long ticksRemaining) {
-        this.ticksRemaining = ticksRemaining;
     }
 }

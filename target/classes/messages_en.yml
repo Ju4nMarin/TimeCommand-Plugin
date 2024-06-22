@@ -1,7 +1,0 @@
-# messages_en.yml
-no_permission: "&cYou don't have permission to use this command."
-command.usage: "&aUsage: /tmc <command> <unit> <quantity>."
-
-# messages_es.yml
-no_permission: "&cNo tienes permiso para usar este comando."
-command.usage: "&aUso: /tmc <comando> <unidad> <cantidad>."
